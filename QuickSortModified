@@ -1,0 +1,119 @@
+#include <iostream>
+
+void Swap(int* a, int* b) {
+  int temp = *a;
+  *a = *b;
+  *b = temp;
+}
+
+int BinarySearch(int arr[], int begin, int end, int target) {
+  while (begin <= end) {
+    int mid = begin + (end - begin) / 2;
+    if (target == arr[mid]) {
+      return mid;
+    } else if (target < arr[mid]) {
+      end = mid - 1;
+    } else {
+      begin = mid + 1;
+    }
+  }
+  return begin;
+}
+
+void InsertionSort(int arr[], int length) {
+  for (int i = 1; i < length; ++i) {
+    int key = arr[i];
+    int position = BinarySearch(arr, 0, i - 1, key);
+    int j = i - 1;
+    while (j >= position) {
+      arr[j + 1] = arr[j];
+      --j;
+    }
+    arr[position] = key;
+  }
+}
+
+int FindMedian(int arr[], int start, int end) {
+  int length = end - start + 1;
+  InsertionSort(arr + start, length);
+  return arr[start + length / 2];
+}
+
+int MedianOfMedians(int arr[], int start, int end) {
+  int n = end - start + 1;
+  if (n <= 5) {
+    return FindMedian(arr, start, end);
+  }
+
+  int num_groups = (n + 4) / 5;
+  int medians[num_groups];
+  for (int i = 0; i < num_groups; ++i) {
+    int group_start = start + i * 5;
+    int group_end = group_start + 4;
+    if (group_end > end) {
+      group_end = end;
+    }
+    medians[i] = FindMedian(arr, group_start, group_end);
+  }
+
+  return MedianOfMedians(medians, 0, num_groups - 1);
+}
+
+int Partition(int arr[], int start, int end, int pivot_value) {
+  int i = start, j = end;
+  while (i <= j) {
+    while (arr[i] < pivot_value) i++;
+    while (arr[j] > pivot_value) j--;
+    if (i <= j) {
+      Swap(&arr[i], &arr[j]);
+      i++;
+      j--;
+    }
+  }
+  return j;
+}
+
+void QuickSort(int arr[], int start, int end) {
+  while (start < end) {
+    if (end - start + 1 < 16) {
+      InsertionSort(arr + start, end - start + 1);
+      break;
+    }
+    int pivot_value = MedianOfMedians(arr, start, end);
+    int pivot_index = Partition(arr, start, end, pivot_value);
+    if (pivot_index - start < end - pivot_index) {
+      QuickSort(arr, start, pivot_index);
+      start = pivot_index + 1;
+    } else {
+      QuickSort(arr, pivot_index + 1, end);
+      end = pivot_index;
+    }
+  }
+}
+
+int main() {
+  std::size_t num_elements;
+  if (!(std::cin >> num_elements) || num_elements == 0) {
+    std::cout << "Array size must be greater than 0" << std::endl;
+    return 1;
+  }
+
+  int* arr = new int[num_elements];
+  for (std::size_t i = 0; i < num_elements; ++i) {
+    if (!(std::cin >> arr[i])) {
+      std::cout << "Wrong Input!" << std::endl;
+      delete[] arr;
+      return 1;
+    }
+  }
+
+  QuickSort(arr, 0, num_elements - 1);
+
+  for (std::size_t j = 0; j < num_elements; ++j) {
+    std::cout << arr[j] << ' ';
+  }
+  std::cout << '\n';
+
+  delete[] arr;
+  return 0;
+}
